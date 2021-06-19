@@ -1,0 +1,57 @@
+﻿using ExcelDataReader;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Data;
+using System.IO;
+using System.Text;
+
+namespace Files
+{
+    public class FileReading
+    {
+        public string Seperator { get; set; }
+        public string FilePath { get; set; }
+        public FileType FileType { get; set; }
+        public FileReading(string filePath, FileType fileType, string seperator = "")
+        {
+            FilePath = filePath;
+            FileType = fileType;
+            Seperator = seperator;
+        }
+        public bool ValidateFileData(FileReading file)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(file.FilePath)) return false;
+                switch (file.FileType)
+                {
+                    case FileType.CSV:
+                        return true;
+                    case FileType.EXCEL:
+                        return true;
+                    case FileType.TEXT:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+    public enum FileType
+    {
+        TEXT,
+        CSV,
+        EXCEL
+    }
+    public enum GETDATAIN
+    {
+        BYTEARRAY,
+        STRING,
+        LISTSTRING
+    }
+}
