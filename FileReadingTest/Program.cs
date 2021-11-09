@@ -10,10 +10,10 @@ namespace FileReadingTest
     class Program
     {
         static void Main(string[] args)
-        {
-            ExcelReader excelfile = new ExcelReader(@"C:\Users\p.patil\Downloads\TEJO-MIG-FlatFile.xlsx", FileType.EXCEL);
-            TextReader textFile = new TextReader(@"C:\Users\p.patil\Downloads\2006.txt", FileType.TEXT,"|");
-            Stopwatch sw = new Stopwatch();
+        { 
+            ExcelReader excelfile = new(@"C:\Users\p.patil\Downloads\TEJO-MIG-FlatFile.xlsx", FileType.EXCEL);
+            TextReader textFile = new(@"C:\Users\p.patil\Downloads\2006.txt", FileType.TEXT,"|");
+            Stopwatch sw = new();
             sw.Start();
             var textData = textFile.GetDataFromText(textFile);
             DataTableCollection excel = excelfile.ConvertExcelToDataTable(excelfile);

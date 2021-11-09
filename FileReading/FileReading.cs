@@ -19,22 +19,24 @@ namespace Files
             FileType = fileType;
             Seperator = seperator;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="FileReading object"></param>
+        /// <returns>True if file data is correct else False</returns>
         public bool ValidateFileData(FileReading file)
         {
             try
             {
                 if (string.IsNullOrEmpty(file.FilePath)) return false;
-                switch (file.FileType)
+                if (!File.Exists(file.FilePath)) return false;
+                return file.FileType switch
                 {
-                    case FileType.CSV:
-                        return true;
-                    case FileType.EXCEL:
-                        return true;
-                    case FileType.TEXT:
-                        return true;
-                    default:
-                        return false;
-                }
+                    FileType.CSV => true,
+                    FileType.EXCEL => true,
+                    FileType.TEXT => true,
+                    _ => false,
+                };
             }
             catch
             {
