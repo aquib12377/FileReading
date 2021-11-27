@@ -6,7 +6,9 @@ FileReading is a Console Application to read EXCEL, CSV and TEXT Files
 ## How to use?
 
 
-![App Screenshot](https://raw.githubusercontent.com/aquib12377/FileReading/master/image.png)Just create an instance of CSVReader.
+![App Screenshot](https://raw.githubusercontent.com/aquib12377/FileReading/master/image.png)
+
+Just create an instance of CSVReader.
 
 ```csharp
 CSVReader reader = new CSVReader("Path_to_File", FileType.CSV);
