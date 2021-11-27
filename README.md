@@ -9,7 +9,7 @@ FileReading is a Console Application to read EXCEL, CSV and TEXT Files
 ![App Screenshot](https://raw.githubusercontent.com/aquib12377/FileReading/master/image.png)Just create an instance of CSVReader.
 
 ```csharp
-CSVReader reader = new CSVReader("Path_to_File",FileType.CSV);
+CSVReader reader = new CSVReader("Path_to_File", FileType.CSV);
 
 var csvData = reader.ReadCSV(); ///returns List<string>
 var csvDataWithSeperator = reader.ReadCSVWithSeperator(); ///returns List<string[]>
@@ -18,7 +18,7 @@ var csvDataWithSeperator = reader.ReadCSVWithSeperator(); ///returns List<string
 You can also use custom seperators.
 
 ```csharp
-CSVReader reader = new CSVReader("Path_to_File",FileType.CSV,",");
+CSVReader reader = new CSVReader("Path_to_File", FileType.CSV, ",");
 ```
 ## Features
 
