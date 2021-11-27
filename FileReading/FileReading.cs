@@ -13,6 +13,10 @@ namespace Files
         public string Seperator { get; set; }
         public string FilePath { get; set; }
         public FileType FileType { get; set; }
+        public FileReading()
+        {
+
+        }
         public FileReading(string filePath, FileType fileType, string seperator = "")
         {
             FilePath = filePath;

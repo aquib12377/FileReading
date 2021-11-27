@@ -8,6 +8,10 @@ namespace Files
 {
     public class CSVReader : FileReading
     {
+        public CSVReader()
+        {
+        }
+
         public CSVReader(string filePath, FileType fileType, string seperator = "") : base(filePath, fileType, seperator)
         {
         }

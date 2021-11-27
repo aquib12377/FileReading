@@ -8,25 +8,39 @@ namespace Files
 {
     public class TextReader : FileReading
     {
+        public TextReader()
+        {
+
+        }
+
         public TextReader(string filePath, FileType fileType, string seperator = "") : base(filePath, fileType, seperator)
         {
         }
-        public List<List<string>> GetDataFromText(FileReading file, bool removeWhiteSpace = true)
+        public List<string> ReadText (bool removeWhiteSpace = true)
         {
+            var file = this;
 
-            if (!ValidateFileData(file)) throw new Exception("Invalid File Data");
-            if (!string.IsNullOrEmpty(file.Seperator.Trim())) return GetTextDataWithSeperator(file, removeWhiteSpace);
-            return new List<List<string>> { File.ReadAllLines(file.FilePath).ToList().Where(a => removeWhiteSpace == false ? !string.IsNullOrEmpty(a.Trim()) : !(removeWhiteSpace && string.IsNullOrEmpty(a.Trim()))).ToList() };
+            if (!ValidateFileData(file)) 
+                throw new Exception("Invalid File Data");
+
+            return 
+                File.ReadAllLines(file.FilePath).ToList()
+                .Where(a => removeWhiteSpace == false ? !string.IsNullOrEmpty(a.Trim())
+                : !(removeWhiteSpace && string.IsNullOrEmpty(a.Trim()))).ToList();
         }
-
-        private List<List<string>> GetTextDataWithSeperator(FileReading file, bool removeWhiteSpace = true)
+        public List<List<string>> ReadTextWithSeperator(bool removeWhiteSpace = true)
         {
+            var file = this;
             List<string> lines = new List<string>();
             List<List<string>> textFile = new List<List<string>>();
-            string data = File.ReadAllText(file.FilePath);
-            if (!data.Contains(file.Seperator.Trim())) throw new Exception("Given seperator is not present in the text file");
-            textFile.Add(data.Split(Convert.ToChar(file.Seperator)).Where(a => removeWhiteSpace == false ? !string.IsNullOrEmpty(a.Trim()) : !(removeWhiteSpace && string.IsNullOrEmpty(a.Trim()))).AsParallel().Select(a => a).ToList());
-            return textFile;
+
+            List<string> data = File.ReadAllLines(file.FilePath).ToList();
+            
+            return 
+                data.Select(x => x.Trim().Split(Convert.ToChar(file.Seperator))
+                .Where(a => removeWhiteSpace == false ? !string.IsNullOrEmpty(a.Trim())
+                : !(removeWhiteSpace && string.IsNullOrEmpty(a.Trim()))).AsParallel()
+                .Select(a => a).ToList()).ToList(); ;
         }
     }
 }

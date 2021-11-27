@@ -14,8 +14,14 @@ namespace Files
         public ExcelReader(string filePath, FileType fileType, string seperator = "") : base(filePath, fileType, seperator)
         {
         }
-        public DataTableCollection ConvertExcelToDataTable(FileReading file, bool useHeaderRow = false)
+
+        public ExcelReader()
         {
+        }
+
+        public DataTableCollection ConvertExcelToDataTable(bool useHeaderRow = false)
+        {
+            var file = this;
             if (!ValidateFileData(file)) throw new Exception("Invalid File Data");
             switch (file.FileType)
             {
@@ -26,41 +32,41 @@ namespace Files
             }
             try
             {
-                return ConvertExcelToDataSet(file, useHeaderRow).Tables;
+                return ConvertExcelToDataSet(useHeaderRow).Tables;
             }
             catch (Exception e)
             {
                 throw new Exception(e.Message ?? e.InnerException.ToString());
             }
         }
-        public DataSet ConvertExcelToDataSet(FileReading file, bool useHeaderRow = false)
+        public DataSet ConvertExcelToDataSet( bool useHeaderRow = false)
         {
             try
             {
+                var file = this;
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                using (var stream = File.Open(file.FilePath, FileMode.Open, FileAccess.Read))
+                using var stream = File.Open(file.FilePath, FileMode.Open, FileAccess.Read);
+                IExcelDataReader reader = ExcelReaderFactory.CreateReader(stream);
+                var conf = new ExcelDataSetConfiguration
                 {
-                    IExcelDataReader reader = ExcelReaderFactory.CreateReader(stream);
-                    var conf = new ExcelDataSetConfiguration
+                    ConfigureDataTable = _ => new ExcelDataTableConfiguration
                     {
-                        ConfigureDataTable = _ => new ExcelDataTableConfiguration
-                        {
-                            UseHeaderRow = useHeaderRow
-                        }
-                    };
-                    return reader.AsDataSet(conf);
-                }
+                        UseHeaderRow = useHeaderRow
+                    }
+                };
+                return reader.AsDataSet(conf);
             }
             catch(Exception e)
             {
                 throw new Exception(e.Message ?? e.InnerException.ToString());
             }
         }
-        public List<List<List<string>>> ConvertExcelToList(FileReading file)
+        public List<List<List<string>>> ConvertExcelToList()
         {
+            var file = this;
             List<List<List<string>>> Tables = new List<List<List<string>>>();
             List<List<string>> Columns;
-            DataTableCollection dataTables = ConvertExcelToDataTable(file);
+            DataTableCollection dataTables = ConvertExcelToDataTable();
 
             foreach (DataTable table in dataTables)
             {
