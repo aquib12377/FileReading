@@ -1,5 +1,6 @@
 ﻿using ExcelDataReader;
 using Files;
+using Files.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -19,10 +20,16 @@ namespace Files
         {
         }
 
+        /// <summary>
+        /// Converts the Excel file to a DataTableCollection.
+        /// </summary>
+        /// <param name="useHeaderRow">Indicates whether the first row should be used as header.</param>
+        /// <returns>A collection of DataTables.</returns>
         public DataTableCollection ConvertExcelToDataTable(bool useHeaderRow = false)
         {
             var file = this;
             if (!ValidateFileData(file)) throw new Exception("Invalid File Data");
+
             switch (file.FileType)
             {
                 case FileType.CSV:
@@ -30,6 +37,7 @@ namespace Files
                 case FileType.TEXT:
                     throw new Exception("This method cannot get data from Text File");
             }
+
             try
             {
                 return ConvertExcelToDataSet(useHeaderRow).Tables;
@@ -39,7 +47,13 @@ namespace Files
                 throw new Exception(e.Message ?? e.InnerException.ToString());
             }
         }
-        public DataSet ConvertExcelToDataSet( bool useHeaderRow = false)
+
+        /// <summary>
+        /// Converts the Excel file to a DataSet.
+        /// </summary>
+        /// <param name="useHeaderRow">Indicates whether the first row should be used as header.</param>
+        /// <returns>A DataSet containing the data from the Excel file.</returns>
+        public DataSet ConvertExcelToDataSet(bool useHeaderRow = false)
         {
             try
             {
@@ -56,30 +70,97 @@ namespace Files
                 };
                 return reader.AsDataSet(conf);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new Exception(e.Message ?? e.InnerException.ToString());
             }
         }
+
+        /// <summary>
+        /// Converts the Excel file to a list of lists of lists of strings.
+        /// </summary>
+        /// <returns>A list of lists of lists of strings containing the data from the Excel file.</returns>
         public List<List<List<string>>> ConvertExcelToList()
         {
             var file = this;
-            List<List<List<string>>> Tables = new List<List<List<string>>>();
-            List<List<string>> Columns;
-            DataTableCollection dataTables = ConvertExcelToDataTable();
+            var tables = new List<List<List<string>>>();
+            var dataTables = ConvertExcelToDataTable();
 
             foreach (DataTable table in dataTables)
             {
-                Columns = new List<List<string>>();
-                for (int i = 0; i < table.Columns.Count; i++)
+                var columns = new List<List<string>>();
+                for (var i = 0; i < table.Columns.Count; i++)
                 {
-                    Columns.Add(table.Rows.OfType<DataRow>().Select(a => a.ItemArray[i].ToString()).ToList());
+                    columns.Add(table.Rows.OfType<DataRow>().Select(a => a.ItemArray[i].ToString()).ToList());
                 }
 
-                Tables.Add(Columns);
+                tables.Add(columns);
             }
 
-            return Tables;
+            return tables;
+        }
+
+        /// <summary>
+        /// Gets the list of sheet names in the Excel file.
+        /// </summary>
+        /// <returns>A list of sheet names.</returns>
+        public List<string> GetSheetNames()
+        {
+            var dataSet = ConvertExcelToDataSet();
+            return dataSet.Tables.Cast<DataTable>().Select(table => table.TableName).ToList();
+        }
+
+        /// <summary>
+        /// Extracts a specific sheet from the Excel file as a DataTable.
+        /// </summary>
+        /// <param name="sheetName">The name of the sheet to extract.</param>
+        /// <param name="useHeaderRow">Indicates whether the first row should be used as header.</param>
+        /// <returns>The specified sheet as a DataTable.</returns>
+        public DataTable ExtractSheet(string sheetName, bool useHeaderRow = false)
+        {
+            var dataSet = ConvertExcelToDataSet(useHeaderRow);
+            return dataSet.Tables[sheetName];
+        }
+
+        /// <summary>
+        /// Extracts a specific sheet from the Excel file as a list of lists of strings.
+        /// </summary>
+        /// <param name="sheetName">The name of the sheet to extract.</param>
+        /// <returns>The specified sheet as a list of lists of strings.</returns>
+        public List<List<string>> ExtractSheetAsList(string sheetName)
+        {
+            var table = ExtractSheet(sheetName);
+            var columns = new List<List<string>>();
+
+            for (var i = 0; i < table.Columns.Count; i++)
+            {
+                columns.Add(table.Rows.OfType<DataRow>().Select(a => a.ItemArray[i].ToString()).ToList());
+            }
+
+            return columns;
+        }
+
+        /// <summary>
+        /// Checks if the specified sheet exists in the Excel file.
+        /// </summary>
+        /// <param name="sheetName">The name of the sheet to check for.</param>
+        /// <returns>True if the sheet exists, otherwise false.</returns>
+        public bool SheetExists(string sheetName)
+        {
+            var sheetNames = GetSheetNames();
+            return sheetNames.Contains(sheetName);
+        }
+
+        public ExcelDocument ReadExcel()
+        {
+            if (!ValidateFileData(this))
+                throw new Exception("Invalid File Data");
+
+            var document = new ExcelDocument(FilePath);
+
+            document.LoadFromExcel(FilePath);
+
+            return document;
         }
     }
 }

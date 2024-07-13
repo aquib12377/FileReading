@@ -11,13 +11,14 @@ namespace FileReading.Test
         public List<string[]> ListWithSeperators { get; set; }
         public void Test()
         {
-            var file = new CSVReader()
-            {
-                FilePath = @"D:\Visual_Studio_Projects\FileReading\FileReading.Test\Test_Files\SampleCSV.csv",
-                FileType = FileType.CSV
-            };
-            List = file.ReadCSV();
-            ListWithSeperators = file.ReadCSVWithSeperator();
+            var file = new CSVReader
+                (
+                filePath: "C:\\Users\\ITAdmin\\source\\repos\\FileReading\\FileReading.Test\\Test_Files\\normal.csv",
+                 fileType: FileType.CSV
+            );
+            var normalCSVDocument = file.ReadCSV();
+            file.FilePath = "C:\\Users\\ITAdmin\\source\\repos\\FileReading\\FileReading.Test\\Test_Files\\dataValidation.csv";
+            var commaInValCSVDocument = file.ReadCSV();
         }
     }
 }

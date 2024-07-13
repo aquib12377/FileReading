@@ -13,12 +13,11 @@ namespace FileReading.Test
         {
             var file = new TextReader()
             {
-                FilePath = @"D:\Visual_Studio_Projects\FileReading\FileReading.Test\Test_Files\SampleText.txt",
+                FilePath = @"C:\Users\ITAdmin\Source\Repos\FileReading\FileReading.Test\Test_Files\SampleText.txt",
                 FileType = FileType.TEXT,
                 Seperator = "\t"
             };
-            List = file.ReadText();
-            ListWithSeperator = file.ReadTextWithSeperator();
+            var textDocument = file.ReadTextFile();
         }
     }
 }

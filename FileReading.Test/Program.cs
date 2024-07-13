@@ -1,4 +1,12 @@
-﻿using System;
+﻿using Files;
+using Files.Models;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.IO.MemoryMappedFiles;
+using System.Linq;
+using System.Text;
 
 namespace FileReading.Test
 {
@@ -6,14 +14,14 @@ namespace FileReading.Test
     {
         static void Main(string[] args)
         {
-            ExcelReaderTest excelReaderTest = new ExcelReaderTest();
-            excelReaderTest.Test();
+            TextReaderTest textReaderTest = new TextReaderTest();
+            textReaderTest.Test();
 
             CSVReaderTest cSVReaderTest = new CSVReaderTest();
             cSVReaderTest.Test();
 
-            TextReaderTest textReaderTest = new TextReaderTest();
-            textReaderTest.Test();
+            ExcelReaderTest excelReaderTest = new ExcelReaderTest();
+            excelReaderTest.Test();
         }
     }
 }

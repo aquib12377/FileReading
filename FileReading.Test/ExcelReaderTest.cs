@@ -14,12 +14,13 @@ namespace FileReading.Test
         {
             var file = new ExcelReader()
             {
-                FilePath = @"D:\Visual_Studio_Projects\FileReading\FileReading.Test\Test_Files\SampleExcel.xlsx",
+                FilePath = @"C:\Users\ITAdmin\source\repos\FileReading\FileReading.Test\Test_Files\SampleExcel.xlsx",
                 FileType = FileType.EXCEL
             };
             List = file.ConvertExcelToList();
             DataSet = file.ConvertExcelToDataSet();
             DataTable = file.ConvertExcelToDataTable();
+            var document = file.ReadExcel();
         }
     }
 }
