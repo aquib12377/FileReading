@@ -186,11 +186,10 @@ namespace Files
         {
             if (!ValidateFileData(this)) throw new Exception("Invalid File Data");
 
-            var data = ReadFileUsingBufferedStream(FilePath);
             var document = new CsvDocument(FilePath);
 
             int lineNumber = 1;
-            foreach (var line in data)
+            foreach (var line in ReadCsvLines(FilePath))
             {
                 var cells = line.Split(string.IsNullOrEmpty(this.Seperator) ? ',' : Convert.ToChar(this.Seperator)).ToList();
                 if (removeWhiteSpace)
