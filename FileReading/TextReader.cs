@@ -24,7 +24,7 @@ namespace Files
             if (!ValidateFileData(this))
                 throw new Exception("Invalid File Data");
 
-            var lines = ReadFileUsingBufferedStream(FilePath)
+            var lines = ReadTextLines(FilePath)
                 .Where(line => !removeWhiteSpace || !string.IsNullOrWhiteSpace(line))
                 .ToList();
 
@@ -52,6 +52,16 @@ namespace Files
             return document;
         }
 
+        private IEnumerable<string> ReadTextLines(string filePath)
+        {
+            using var reader = new StreamReader(filePath);
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                yield return line;
+            }
+        }
+
         /// <summary>
         /// Reads text file and returns formatted output as DataTable
         /// </summary>
@@ -61,7 +71,7 @@ namespace Files
                 throw new Exception("Invalid File Data");
 
             var dataTable = new DataTable(Path.GetFileNameWithoutExtension(FilePath));
-            var lines = ReadFileUsingBufferedStream(FilePath);
+            var lines = ReadTextLines(FilePath).ToList();
             
             // Determine columns based on first line
             var firstLine = lines.FirstOrDefault();
@@ -126,7 +136,7 @@ namespace Files
             if (!ValidateFileData(this))
                 throw new Exception("Invalid File Data");
 
-            var lines = ReadFileUsingBufferedStream(FilePath);
+            var lines = ReadTextLines(FilePath);
             
             if (trimLines)
             {
@@ -151,7 +161,7 @@ namespace Files
 
             var paragraphs = new List<string>();
             var currentParagraph = new StringBuilder();
-            var lines = ReadFileUsingBufferedStream(FilePath);
+            var lines = ReadTextLines(FilePath);
 
             foreach (var line in lines)
             {
@@ -188,7 +198,7 @@ namespace Files
                 throw new Exception("Invalid File Data");
 
             var result = new Dictionary<string, string>();
-            var lines = ReadFileUsingBufferedStream(FilePath);
+            var lines = ReadTextLines(FilePath);
             var regex = new Regex(pattern, RegexOptions.Multiline);
 
             foreach (var line in lines)
@@ -217,7 +227,7 @@ namespace Files
                 throw new Exception("Invalid File Data");
 
             var results = new List<(int, string)>();
-            var lines = ReadFileUsingBufferedStream(FilePath);
+            var lines = ReadTextLines(FilePath);
             
             Regex regex = null;
             if (useRegex)
@@ -252,7 +262,7 @@ namespace Files
         /// <summary>
         /// Reads large text files using streaming for better memory efficiency
         /// </summary>
-        public IEnumerable<string> ReadTextLargeFile(int chunkSize = 1000)
+        public IEnumerable<List<string>> ReadTextLargeFile(int chunkSize = 1000)
         {
             if (!ValidateFileData(this))
                 throw new Exception("Invalid File Data");
@@ -285,7 +295,7 @@ namespace Files
             if (!ValidateFileData(this))
                 throw new Exception("Invalid File Data");
 
-            var lines = ReadFileUsingBufferedStream(FilePath);
+            var lines = ReadTextLines(FilePath).ToList();
             var stats = new TextStatistics
             {
                 LineCount = lines.Count,
