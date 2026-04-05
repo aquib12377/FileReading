@@ -1,10 +1,10 @@
-﻿using ExcelDataReader;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.IO.Packaging;
 using System.Linq;
-using System.Text;
+using System.Xml;
 
 namespace Files.Models
 {
@@ -30,12 +30,14 @@ namespace Files.Models
         public List<ExcelRow> Rows { get; private set; }
         public List<string> Headers { get; private set; }
         public string ExcelName { get; private set; }
+        public Dictionary<string, List<List<string>>> Sheets { get; private set; }
 
         public ExcelDocument(string path)
         {
             ExcelName = Path.GetFileNameWithoutExtension(path);
             Rows = new List<ExcelRow>();
             Headers = new List<string>();
+            Sheets = new Dictionary<string, List<List<string>>>();
         }
 
         public void AddRow(ExcelRow row)
@@ -174,26 +176,61 @@ namespace Files.Models
         {
             try
             {
-                using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
-                using var reader = ExcelReaderFactory.CreateReader(stream);
-                var dataSet = reader.AsDataSet();
-                int lineNumber = 1;
+                using var package = Package.Open(filePath, FileMode.Open, FileAccess.Read);
+                
+                // Find workbook.xml
+                var workbookPart = package.GetParts()
+                    .FirstOrDefault(p => p.Uri.ToString().Contains("workbook.xml"));
+                
+                if (workbookPart == null)
+                    throw new Exception("Invalid Excel file: workbook.xml not found");
 
-                if (hasHeaders && dataSet.Tables.Count > 0)
+                var workbookXml = new XmlDocument();
+                using (var workbookStream = workbookPart.GetStream())
                 {
-                    var headerTable = dataSet.Tables[0];
-                    Headers = headerTable.Rows[0].ItemArray.Select(cell => cell.ToString()).ToList();
-                    lineNumber++;
+                    workbookXml.Load(workbookStream);
                 }
 
-                foreach (DataTable table in dataSet.Tables)
+                var nsmgr = new XmlNamespaceManager(workbookXml.NameTable);
+                nsmgr.AddNamespace("x", "http://schemas.openxmlformats.org/spreadsheetml/2006/main");
+                nsmgr.AddNamespace("r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+
+                var sheets = workbookXml.SelectNodes("//x:sheets/x:sheet", nsmgr);
+                int lineNumber = 1;
+
+                foreach (XmlNode sheetNode in sheets)
                 {
-                    foreach (DataRow row in table.Rows)
+                    var sheetName = sheetNode.Attributes["name"]?.Value;
+                    var sheetId = sheetNode.Attributes["r:id"]?.Value;
+                    
+                    // Find worksheet part
+                    var worksheetPart = package.GetParts()
+                        .FirstOrDefault(p => GetRelationshipId(package, p) == sheetId);
+                    
+                    if (worksheetPart != null)
                     {
-                        var cells = row.ItemArray.Select(cell => cell.ToString()).ToList();
-                        var excelRow = new ExcelRow(lineNumber, cells);
-                        AddRow(excelRow);
-                        lineNumber++;
+                        var worksheetXml = new XmlDocument();
+                        using (var worksheetStream = worksheetPart.GetStream())
+                        {
+                            worksheetXml.Load(worksheetStream);
+                        }
+
+                        var sheetData = ParseWorksheet(worksheetXml, nsmgr, hasHeaders && lineNumber == 1);
+                        
+                        if (hasHeaders && lineNumber == 1 && sheetData.Any())
+                        {
+                            Headers = sheetData.First();
+                            lineNumber++;
+                        }
+
+                        foreach (var row in sheetData)
+                        {
+                            var excelRow = new ExcelRow(lineNumber, row);
+                            AddRow(excelRow);
+                            lineNumber++;
+                        }
+
+                        Sheets[sheetName] = sheetData;
                     }
                 }
 
@@ -211,6 +248,92 @@ namespace Files.Models
             {
                 throw new Exception($"Error loading Excel: {ex.Message}", ex);
             }
+        }
+
+        private string GetRelationshipId(Package package, PackagePart part)
+        {
+            var workbookPart = package.GetParts()
+                .FirstOrDefault(p => p.Uri.ToString().Contains("workbook.xml"));
+            
+            if (workbookPart != null)
+            {
+                var relationships = workbookPart.GetRelationships();
+                foreach (var rel in relationships)
+                {
+                    if (rel.TargetUri == part.Uri)
+                        return rel.Id;
+                }
+            }
+            return null;
+        }
+
+        private List<List<string>> ParseWorksheet(XmlDocument worksheetXml, XmlNamespaceManager nsmgr, bool skipFirstRow = false)
+        {
+            var result = new List<List<string>>();
+            var sheetData = worksheetXml.SelectSingleNode("//x:sheetData", nsmgr);
+            
+            if (sheetData == null)
+                return result;
+
+            var rows = sheetData.SelectNodes("//x:row", nsmgr);
+            if (rows == null || rows.Count == 0)
+                return result;
+
+            bool isFirstRow = skipFirstRow;
+            foreach (XmlNode rowNode in rows)
+            {
+                if (isFirstRow)
+                {
+                    isFirstRow = false;
+                    continue;
+                }
+
+                var cells = rowNode.SelectNodes("//x:c", nsmgr);
+                if (cells == null)
+                    continue;
+
+                var rowValues = new List<string>();
+                foreach (XmlNode cellNode in cells)
+                {
+                    var value = GetCellValue(cellNode, worksheetXml, nsmgr);
+                    rowValues.Add(value);
+                }
+
+                result.Add(rowValues);
+            }
+
+            return result;
+        }
+
+        private string GetCellValue(XmlNode cellNode, XmlDocument worksheetXml, XmlNamespaceManager nsmgr)
+        {
+            var cellType = cellNode.Attributes["t"]?.Value;
+            
+            var valueNode = cellNode.SelectSingleNode("//x:v", nsmgr);
+            if (valueNode == null)
+                return string.Empty;
+
+            var value = valueNode.InnerText;
+
+            if (cellType == "s") // Shared string
+            {
+                return GetSharedStringValue(worksheetXml, int.Parse(value), nsmgr);
+            }
+            else if (cellType == "b") // Boolean
+            {
+                return value == "1" ? "TRUE" : "FALSE";
+            }
+            else if (cellType == "e") // Error
+            {
+                return $"#ERROR:{value}";
+            }
+
+            return value;
+        }
+
+        private string GetSharedStringValue(XmlDocument worksheetXml, int index, XmlNamespaceManager nsmgr)
+        {
+            return $"[SharedString:{index}]";
         }
 
         public void SaveToExcel(string filePath)
